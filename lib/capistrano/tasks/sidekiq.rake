@@ -207,9 +207,7 @@ namespace :sidekiq do
   end
 
   def pid_files
-    sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
-    sidekiq_roles.select! { |role| host.roles.include?(role) }
-    sidekiq_roles.flat_map do |role|
+    select_sidekiq_role.flat_map do |role|
       processes = fetch(:"#{ role }_processes") || fetch(:sidekiq_processes)
       Array.new(processes) { |idx| fetch(:sidekiq_pid).gsub(/\.pid$/, "-#{idx}.pid") }
     end
@@ -249,7 +247,7 @@ namespace :sidekiq do
     end
     args.push "--config #{fetch(:sidekiq_config)}" if fetch(:sidekiq_config)
     args.push "--concurrency #{fetch(:sidekiq_concurrency)}" if fetch(:sidekiq_concurrency)
-    if (process_options = fetch(:sidekiq_options_per_process))
+    if (process_options = fetch(:"#{ select_sidekiq_role.first }_options_per_process"))
       args.push process_options[idx]
     end
     # use sidekiq_options for special options
@@ -282,5 +280,10 @@ namespace :sidekiq do
       fetch(:sidekiq_user) ||
       properties.fetch(:run_as) || # global property across multiple capistrano gems
       role.user
+  end
+
+  def select_sidekiq_role
+    sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
+    sidekiq_roles.select! { |role| host.roles.include?(role) }
   end
 end
