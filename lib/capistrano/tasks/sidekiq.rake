@@ -284,6 +284,6 @@ namespace :sidekiq do
 
   def select_sidekiq_role
     sidekiq_roles = Array(fetch(:sidekiq_roles)).dup
-    sidekiq_roles.select! { |role| host.roles.include?(role) }
+    sidekiq_roles.select { |role| host.roles.include?(role) }
   end
 end
